@@ -55,7 +55,8 @@ class Certificate(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     student = models.ForeignKey(
         Student, on_delete=models.CASCADE, related_name='certificates')
-    course_name = models.CharField(max_length=200)
+    course = models.ForeignKey(
+        'Course', on_delete=models.CASCADE, related_name='certificates')
     issue_date = models.DateField()
     expiry_date = models.DateField(blank=True, null=True)
     unique_code = models.CharField(
@@ -88,7 +89,7 @@ class Certificate(models.Model):
         ]
 
     def __str__(self):
-        return f"Certificate for {self.student.full_name} - {self.course_name}"
+        return f"Certificate for {self.student.full_name} - {self.course.name}"
 
     def generate_signature(self):
         """Generate a digital signature for the certificate."""
@@ -97,7 +98,7 @@ class Certificate(models.Model):
             'certificate_id': str(self.id),
             'student_id': self.student.student_id,
             'student_name': self.student.full_name,
-            'course_name': self.course_name,
+            'course_name': self.course.name,
             'issue_date': self.issue_date.isoformat(),
             'expiry_date': self.expiry_date.isoformat() if self.expiry_date else None,
             'unique_code': self.unique_code,
@@ -127,3 +128,22 @@ class Certificate(models.Model):
         """Verify the certificate's digital signature."""
         current_signature = self.generate_signature()
         return current_signature == self.signature
+
+
+class Course(models.Model):
+    """Model representing a course."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    duration = models.IntegerField(help_text="Duration in weeks or hours")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['name']),
+        ]
+
+    def __str__(self):
+        return self.name

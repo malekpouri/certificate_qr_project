@@ -3,10 +3,10 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django_filters import rest_framework as filters
-from .models import Student, Certificate
+from .models import Student, Certificate, Course
 from .serializers import (
     StudentSerializer, CertificateSerializer,
-    CertificateValidationSerializer
+    CertificateValidationSerializer, CourseSerializer
 )
 
 
@@ -44,18 +44,10 @@ class StudentViewSet(viewsets.ModelViewSet):
 class CertificateFilter(filters.FilterSet):
     """Filter for Certificate model."""
     student_name = filters.CharFilter(method='filter_by_student_name')
-    issue_date_after = filters.DateFilter(
-        field_name='issue_date', lookup_expr='gte')
-    issue_date_before = filters.DateFilter(
-        field_name='issue_date', lookup_expr='lte')
-    expiry_date_after = filters.DateFilter(
-        field_name='expiry_date', lookup_expr='gte')
-    expiry_date_before = filters.DateFilter(
-        field_name='expiry_date', lookup_expr='lte')
-
-    class Meta:
-        model = Certificate
-        fields = ['status', 'course_name']
+    course = filters.CharFilter(
+        field_name='course__name', lookup_expr='icontains')
+    issue_date = filters.DateFilter()
+    expiry_date = filters.DateFilter()
 
     def filter_by_student_name(self, queryset, name, value):
         return queryset.filter(
@@ -63,6 +55,11 @@ class CertificateFilter(filters.FilterSet):
         ) | queryset.filter(
             student__last_name__icontains=value
         )
+
+    class Meta:
+        model = Certificate
+        fields = ['student_name', 'course',
+                  'issue_date', 'expiry_date', 'status']
 
 
 class CertificateViewSet(viewsets.ModelViewSet):
@@ -72,19 +69,19 @@ class CertificateViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminUser]
     filterset_class = CertificateFilter
     search_fields = [
-        'course_name', 'student__first_name',
+        'course__name', 'student__first_name',
         'student__last_name', 'student__student_id'
     ]
     ordering_fields = [
         'created_at', 'issue_date', 'expiry_date',
-        'course_name', 'status'
+        'course__name', 'status'
     ]
     ordering = ['-created_at']
 
-    @action(detail=False, methods=['get'], permission_classes=[])
+    @action(detail=False, methods=['post'], permission_classes=[])
     def validate(self, request):
         """Validate a certificate by its unique code."""
-        unique_code = request.query_params.get('unique_code')
+        unique_code = request.data.get('unique_code')
         if not unique_code:
             return Response(
                 {'error': 'Unique code is required'},
@@ -111,5 +108,15 @@ class CertificateViewSet(viewsets.ModelViewSet):
                     'is_valid': False,
                     'message': 'Certificate not found'
                 },
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_200_OK
             )
+
+
+class CourseViewSet(viewsets.ModelViewSet):
+    """ViewSet for Course model."""
+    queryset = Course.objects.all()
+    serializer_class = CourseSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    search_fields = ['name', 'description']
+    ordering_fields = ['created_at', 'name', 'duration']
+    ordering = ['-created_at']
