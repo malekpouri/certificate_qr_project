@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  django:
+    build: 
+      context: .
+      dockerfile: docker/django/Dockerfile
+    container_name: django_service
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/django_db
+      - DEBUG=1
+      - SECRET_KEY=your-secret-key-here
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  qrcode:
+    build: 
+      context: .
+      dockerfile: docker/fastapi/Dockerfile
+    container_name: qrcode_service
+    volumes:
+      - .:/app
+    ports:
+      - "8001:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/qrcode_db
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  validator:
+    build: 
+      context: .
+      dockerfile: docker/fastapi/Dockerfile
+    container_name: validator_service
+    volumes:
+      - .:/app
+    ports:
+      - "8002:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/validator_db
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  db:
+    image: postgres:17
+    container_name: postgres_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_MULTIPLE_DATABASES=django_db,qrcode_db,validator_db
+    ports:
+      - "5432:5432"
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge 
