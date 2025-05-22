@@ -23,30 +23,23 @@ A secure and efficient certificate management system built with Django, featurin
 
 ```
 certificate_project/
-├── apps/                    # Main applications directory
-│   └── certificate/         # Django app for certificate generation and QR code
+├── apps/
+│   └── certificate/         # Django app for certificate management
+│       ├── models.py       # Database models
+│       ├── views.py        # API views
+│       ├── urls.py         # URL routing
+│       ├── serializers.py  # API serializers
+│       └── utils.py        # QR code generation utilities
 ├── config/                  # Django project configuration
-├── shared/                  # Shared utilities and models
-├── docker/                  # Docker configuration files
-│   └── django/             # Django service Docker files
-├── scripts/                 # Utility scripts
-├── tests/                   # Test suites
-├── .env.example            # Example environment variables
-├── docker-compose.yml      # Docker compose configuration
-└── requirements/           # Python dependencies
-    ├── base.txt           # Common dependencies
-    └── django.txt         # Django-specific dependencies
+├── docker/
+│   └── django              # Django Dockerfile
+├── requirements/           # Python dependencies
+│   ├── base.txt           # Common dependencies
+│   └── django.txt         # Django-specific dependencies
+├── .env.example           # Example environment variables
+├── docker-compose.yml     # Docker compose configuration
+└── manage.py             # Django management script
 ```
-
-## Services
-
-1. **Certificate Service (Django)**
-
-   - Main application for certificate generation
-   - User management and authentication
-   - Certificate template management
-   - Database operations
-   - QR code generation for certificates
 
 ## Setup Instructions
 
@@ -65,9 +58,35 @@ certificate_project/
 
 ## Testing
 
+The project includes comprehensive test coverage for all major components:
+
 ```bash
 # Run all tests
-docker-compose run django python manage.py test
+docker-compose run django python manage.py test apps.certificate.tests
+
+# Run tests with coverage report
+docker-compose run django coverage run --source='.' manage.py test apps.certificate.tests
+docker-compose run django coverage report
+```
+
+### Test Structure
+
+- `test_models.py`: Tests for database models
+- `test_views.py`: Tests for API endpoints
+- `test_serializers.py`: Tests for data serialization
+- `test_config.py`: Test configuration and discovery
+
+### Running Specific Tests
+
+```bash
+# Run specific test file
+docker-compose run django python manage.py test apps.certificate.tests.test_models
+
+# Run specific test case
+docker-compose run django python manage.py test apps.certificate.tests.test_models.StudentModelTest
+
+# Run specific test method
+docker-compose run django python manage.py test apps.certificate.tests.test_models.StudentModelTest.test_student_creation
 ```
 
 ## API Documentation
