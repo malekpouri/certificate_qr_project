@@ -1,6 +1,23 @@
-# Certificate Generation System
+# Certificate QR Project
 
-A Django-based system for generating and validating certificates with QR code integration.
+A secure and efficient certificate management system built with Django, featuring QR code-based validation. The system enables educational institutions to issue digital certificates with embedded QR codes, allowing instant verification of certificate authenticity. Built with modern web technologies and containerized for easy deployment.
+
+## Key Features
+
+- **QR Code Generation**: Automatically generates unique QR codes for each certificate
+- **Instant Validation**: Scan QR codes to instantly verify certificate authenticity
+- **Secure Authentication**: JWT-based authentication for secure API access
+- **Admin Dashboard**: Comprehensive interface for managing certificates, students, and courses
+- **RESTful API**: Well-documented API endpoints for seamless integration
+- **Docker Support**: Containerized deployment for consistent environments
+
+## Technology Stack
+
+- **Backend**: Django with Django REST Framework
+- **Database**: PostgreSQL
+- **Authentication**: JWT (JSON Web Tokens)
+- **Documentation**: Swagger UI
+- **Containerization**: Docker & Docker Compose
 
 ## Project Structure
 
