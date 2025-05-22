@@ -84,7 +84,7 @@ class CertificateViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], permission_classes=[])
     def validate(self, request):
         """Validate a certificate by its unique code."""
-        unique_code = request.query_params.get('code')
+        unique_code = request.query_params.get('unique_code')
         if not unique_code:
             return Response(
                 {'error': 'Unique code is required'},

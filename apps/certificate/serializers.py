@@ -20,6 +20,7 @@ class CertificateSerializer(serializers.ModelSerializer):
     student_id = serializers.UUIDField(write_only=True)
     created_by_email = serializers.EmailField(
         source='created_by.email', read_only=True)
+    unique_code = serializers.CharField(read_only=True)
 
     class Meta:
         model = Certificate
@@ -27,11 +28,11 @@ class CertificateSerializer(serializers.ModelSerializer):
             'id', 'student', 'student_id', 'course_name',
             'issue_date', 'expiry_date', 'unique_code',
             'status', 'created_by_email', 'created_at',
-            'updated_at'
+            'updated_at', 'signature'
         ]
         read_only_fields = [
             'id', 'unique_code', 'created_by_email',
-            'created_at', 'updated_at'
+            'created_at', 'updated_at', 'signature'
         ]
 
     def create(self, validated_data):
