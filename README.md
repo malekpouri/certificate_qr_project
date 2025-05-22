@@ -87,3 +87,41 @@ docker-compose run django python manage.py test
     "message": "Certificate is valid"
   }
   ```
+
+### Interactive API Documentation
+
+For interactive API documentation, you can use Swagger UI. To set it up:
+
+1. Install `drf-yasg`:
+
+   ```bash
+   pip install drf-yasg
+   ```
+
+2. Add the following to your `config/urls.py`:
+
+   ```python
+   from drf_yasg.views import get_schema_view
+   from drf_yasg import openapi
+   from rest_framework import permissions
+
+   schema_view = get_schema_view(
+      openapi.Info(
+         title="Certificate API",
+         default_version='v1',
+         description="API for certificate generation and validation",
+         terms_of_service="https://www.example.com/terms/",
+         contact=openapi.Contact(email="contact@example.com"),
+         license=openapi.License(name="BSD License"),
+      ),
+      public=True,
+      permission_classes=(permissions.AllowAny,),
+   )
+
+   urlpatterns = [
+      # ... your existing urls ...
+      path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+   ]
+   ```
+
+3. Access the Swagger UI at `/swagger/` to explore and test the API endpoints.
