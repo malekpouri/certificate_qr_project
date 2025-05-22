@@ -4,38 +4,43 @@ services:
   django:
     build: 
       context: .
-      dockerfile: docker/django/Dockerfile
-    container_name: django_service
+      dockerfile: docker/django
+    container_name: certificate-app
     volumes:
       - .:/app
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/django_db
+      - DB_NAME=certificate_db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres123
+      - DB_HOST=db
+      - DB_PORT=5432
       - DEBUG=1
-      - SECRET_KEY=your-secret-key-here
+      - SECRET_KEY=django-insecure-=c(8r%54(b=b(-$=qe++cp*@z(os8j129!ifdrabtp4)a#aio-
     depends_on:
       - db
     networks:
-      - app-network
+      - certificate-network
 
   db:
     image: postgres:17
-    container_name: postgres_db
+    container_name: certificate-db
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - certificate-db-data:/var/lib/postgresql/data
     environment:
+      - POSTGRES_DB=certificate_db
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_MULTIPLE_DATABASES=django_db
+      - POSTGRES_PASSWORD=postgres123
     ports:
       - "5432:5432"
     networks:
-      - app-network
+      - certificate-network
 
 volumes:
-  postgres_data:
+  certificate-db-data:
+    external: true
 
 networks:
-  app-network:
-    driver: bridge 
+  certificate-network:
+    external: true 

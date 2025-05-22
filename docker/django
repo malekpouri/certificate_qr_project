@@ -5,7 +5,12 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app \
-    DJANGO_SETTINGS_MODULE=config.settings
+    DJANGO_SETTINGS_MODULE=config.settings \
+    DB_NAME=certificate_db \
+    DB_USER=postgres \
+    DB_PASSWORD=postgres123 \
+    DB_HOST=db \
+    DB_PORT=5432
 
 # Set work directory
 WORKDIR /app
@@ -16,15 +21,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Create a non-root user first
+RUN useradd -m appuser
 
-# Copy project files
-COPY . .
+# Copy only requirements first to leverage Docker cache
+COPY --chown=appuser:appuser requirements/ requirements/
+RUN pip install --no-cache-dir -r requirements/django.txt
 
-# Create a non-root user
-RUN useradd -m appuser && chown -R appuser:appuser /app
+# Copy project files with correct ownership
+COPY --chown=appuser:appuser . .
+
+# Create static directory and collect static files
+RUN mkdir -p /app/static && \
+    python manage.py collectstatic --noinput
+
+# Switch to non-root user
 USER appuser
 
 # Expose port
