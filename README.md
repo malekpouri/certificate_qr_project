@@ -51,3 +51,39 @@ certificate_project/
 # Run all tests
 docker-compose run django python manage.py test
 ```
+
+## API Documentation
+
+### QR Code Generation
+
+- **Endpoint:** `/api/certificates/{certificate_id}/qr-code/`
+- **Method:** GET
+- **Description:** Generates a QR code for a specific certificate. The QR code is returned as a PNG image and can be downloaded with the filename `certificate_{certificate_id}_qrcode.png`.
+
+### Certificate Validation
+
+- **Endpoint:** `/api/certificates/validate/`
+- **Method:** POST
+- **Description:** Validates a certificate using its unique code.
+- **Request Body:**
+  ```json
+  {
+    "unique_code": "your-unique-code-here"
+  }
+  ```
+- **Response:**
+  ```json
+  {
+    "unique_code": "your-unique-code-here",
+    "is_valid": true,
+    "certificate": {
+      "id": 1,
+      "student": "John Doe",
+      "course": "Python Programming",
+      "issue_date": "2023-01-01",
+      "expiry_date": "2024-01-01",
+      "status": "active"
+    },
+    "message": "Certificate is valid"
+  }
+  ```
