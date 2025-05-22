@@ -44,6 +44,7 @@ certificate_project/
 
 - Django service runs on port 8000
 - PostgreSQL runs on port 5432
+- Swagger UI available at `http://localhost:8000/swagger/`
 
 ## Testing
 
@@ -54,74 +55,42 @@ docker-compose run django python manage.py test
 
 ## API Documentation
 
-### QR Code Generation
+The API documentation is available through Swagger UI at `http://localhost:8000/swagger/`. This interactive documentation allows you to:
 
-- **Endpoint:** `/api/certificates/{certificate_id}/qr-code/`
-- **Method:** GET
-- **Description:** Generates a QR code for a specific certificate. The QR code is returned as a PNG image and can be downloaded with the filename `certificate_{certificate_id}_qrcode.png`.
+- View all available API endpoints
+- Test endpoints directly through the interface
+- Understand request/response schemas
+- Authenticate using JWT tokens
 
-### Certificate Validation
+### Available Endpoints
 
-- **Endpoint:** `/api/certificates/validate/`
-- **Method:** POST
-- **Description:** Validates a certificate using its unique code.
-- **Request Body:**
-  ```json
-  {
-    "unique_code": "your-unique-code-here"
-  }
-  ```
-- **Response:**
-  ```json
-  {
-    "unique_code": "your-unique-code-here",
-    "is_valid": true,
-    "certificate": {
-      "id": 1,
-      "student": "John Doe",
-      "course": "Python Programming",
-      "issue_date": "2023-01-01",
-      "expiry_date": "2024-01-01",
-      "status": "active"
-    },
-    "message": "Certificate is valid"
-  }
-  ```
+#### Authentication
 
-### Interactive API Documentation
+- **Token Obtain:** `/api/token/` (POST)
+- **Token Refresh:** `/api/token/refresh/` (POST)
 
-For interactive API documentation, you can use Swagger UI. To set it up:
+#### Certificates
 
-1. Install `drf-yasg`:
+- **List/Create:** `/api/certificates/` (GET, POST)
+- **Detail/Update/Delete:** `/api/certificates/{id}/` (GET, PUT, PATCH, DELETE)
+- **QR Code:** `/api/certificates/{id}/qr-code/` (GET)
+- **Validate:** `/api/certificates/validate/` (POST)
 
-   ```bash
-   pip install drf-yasg
-   ```
+#### Students
 
-2. Add the following to your `config/urls.py`:
+- **List/Create:** `/api/students/` (GET, POST)
+- **Detail/Update/Delete:** `/api/students/{id}/` (GET, PUT, PATCH, DELETE)
 
-   ```python
-   from drf_yasg.views import get_schema_view
-   from drf_yasg import openapi
-   from rest_framework import permissions
+#### Courses
 
-   schema_view = get_schema_view(
-      openapi.Info(
-         title="Certificate API",
-         default_version='v1',
-         description="API for certificate generation and validation",
-         terms_of_service="https://www.example.com/terms/",
-         contact=openapi.Contact(email="contact@example.com"),
-         license=openapi.License(name="BSD License"),
-      ),
-      public=True,
-      permission_classes=(permissions.AllowAny,),
-   )
+- **List/Create:** `/api/courses/` (GET, POST)
+- **Detail/Update/Delete:** `/api/courses/{id}/` (GET, PUT, PATCH, DELETE)
 
-   urlpatterns = [
-      # ... your existing urls ...
-      path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-   ]
-   ```
+### Authentication
 
-3. Access the Swagger UI at `/swagger/` to explore and test the API endpoints.
+The API uses JWT (JSON Web Token) authentication. To access protected endpoints:
+
+1. Obtain a token using the `/api/token/` endpoint
+2. Include the token in the Authorization header: `Authorization: Bearer <your_token>`
+
+For more details about authentication and available endpoints, please refer to the Swagger UI documentation.
