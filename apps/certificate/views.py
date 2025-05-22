@@ -3,11 +3,13 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django_filters import rest_framework as filters
+from django.http import HttpResponse
 from .models import Student, Certificate, Course
 from .serializers import (
     StudentSerializer, CertificateSerializer,
     CertificateValidationSerializer, CourseSerializer
 )
+from .utils import generate_qr_code
 
 
 class StudentFilter(filters.FilterSet):
@@ -78,7 +80,16 @@ class CertificateViewSet(viewsets.ModelViewSet):
     ]
     ordering = ['-created_at']
 
-    @action(detail=False, methods=['post'], permission_classes=[])
+    @action(detail=True, methods=['get'], permission_classes=[], url_path='qr-code')
+    def qr_code(self, request, pk=None):
+        """Generate QR code for a certificate."""
+        certificate = self.get_object()
+        qr_buffer = generate_qr_code(certificate)
+        response = HttpResponse(qr_buffer.getvalue(), content_type='image/png')
+        response['Content-Disposition'] = f'attachment; filename="certificate_{certificate.id}_qrcode.png"'
+        return response
+
+    @action(detail=False, methods=['post'], permission_classes=[], url_path='validate')
     def validate(self, request):
         """Validate a certificate by its unique code."""
         unique_code = request.data.get('unique_code')

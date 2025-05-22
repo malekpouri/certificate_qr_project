@@ -19,38 +19,6 @@ services:
     networks:
       - app-network
 
-  qrcode:
-    build: 
-      context: .
-      dockerfile: docker/fastapi/Dockerfile
-    container_name: qrcode_service
-    volumes:
-      - .:/app
-    ports:
-      - "8001:8000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/qrcode_db
-    depends_on:
-      - db
-    networks:
-      - app-network
-
-  validator:
-    build: 
-      context: .
-      dockerfile: docker/fastapi/Dockerfile
-    container_name: validator_service
-    volumes:
-      - .:/app
-    ports:
-      - "8002:8000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/validator_db
-    depends_on:
-      - db
-    networks:
-      - app-network
-
   db:
     image: postgres:17
     container_name: postgres_db
@@ -59,7 +27,7 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_MULTIPLE_DATABASES=django_db,qrcode_db,validator_db
+      - POSTGRES_MULTIPLE_DATABASES=django_db
     ports:
       - "5432:5432"
     networks:
