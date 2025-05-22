@@ -20,6 +20,7 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
+.venv/
 
 # Django
 *.log
@@ -28,15 +29,6 @@ db.sqlite3
 db.sqlite3-journal
 media/
 staticfiles/
-
-# FastAPI
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
 
 # IDE
 .idea/
@@ -90,4 +82,7 @@ yarn-error.log*
 
 # Local development
 *.sqlite3
-*.db 
+*.db
+
+# Certificate Generator Package
+certificate_generator/ 

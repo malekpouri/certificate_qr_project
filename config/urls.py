@@ -24,8 +24,7 @@ from rest_framework_simplejwt.views import (
 
 
 def root_view(request):
-    print("Root view was called!")  # Debug print
-    return HttpResponse("<h1>It works!</h1><p>If you can see this, the server is working correctly.</p>")
+    return HttpResponse("<h1>Certificate API</h1><p>This is a REST API for certificate management.</p>")
 
 
 urlpatterns = [
