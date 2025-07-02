@@ -1,15 +1,26 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets
 from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
+from rest_framework.permissions import AllowAny
 from django_filters import rest_framework as filters
 from django.http import HttpResponse
+from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.response import Response
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.contrib.auth.models import User
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+
 from .models import Student, Certificate, Course
 from .serializers import (
     StudentSerializer, CertificateSerializer,
     CertificateValidationSerializer, CourseSerializer
 )
 from .utils import generate_qr_code
+from rest_framework.decorators import api_view, permission_classes
+from django.contrib.auth import update_session_auth_hash
+from .serializers import ChangePasswordSerializer, AdminChangeUserPasswordSerializer
 
 
 class StudentFilter(filters.FilterSet):
@@ -136,3 +147,175 @@ class CourseViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'description']
     ordering_fields = ['created_at', 'name', 'duration']
     ordering = ['-created_at']
+
+class ChangePasswordView(APIView):
+    """
+    تغییر پسورد کاربر فعلی
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_description="تغییر پسورد کاربر فعلی",
+        request_body=ChangePasswordSerializer,
+        responses={
+            200: openapi.Response(
+                description="پسورد با موفقیت تغییر کرد",
+                examples={
+                    "application/json": {
+                        "message": "پسورد با موفقیت تغییر کرد.",
+                        "success": True
+                    }
+                }
+            ),
+            400: openapi.Response(
+                description="خطا در تغییر پسورد",
+                examples={
+                    "application/json": {
+                        "message": "داده‌های ارسالی نامعتبر است.",
+                        "errors": {
+                            "old_password": ["پسورد فعلی اشتباه است."],
+                            "new_password": ["پسورد جدید و تکرار آن مطابقت ندارند."]
+                        },
+                        "success": False
+                    }
+                }
+            )
+        },
+        tags=['Password Management']
+    )
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
+
+        if serializer.is_valid():
+            try:
+                user = serializer.save()
+                # حفظ session بعد از تغییر پسورد
+                update_session_auth_hash(request, user)
+
+                return Response({
+                    'message': 'پسورد با موفقیت تغییر کرد.',
+                    'success': True
+                }, status=status.HTTP_200_OK)
+
+            except Exception as e:
+                return Response({
+                    'message': f'خطا در تغییر پسورد: {str(e)}',
+                    'success': False
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({
+            'message': 'داده‌های ارسالی نامعتبر است.',
+            'errors': serializer.errors,
+            'success': False
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AdminChangeUserPasswordView(APIView):
+    """
+    تغییر پسورد کاربران توسط ادمین
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAdminUser]
+
+    @swagger_auto_schema(
+        operation_description="تغییر پسورد کاربران توسط ادمین",
+        request_body=AdminChangeUserPasswordSerializer,
+        responses={
+            200: openapi.Response(
+                description="پسورد کاربر با موفقیت تغییر کرد",
+                examples={
+                    "application/json": {
+                        "message": "پسورد کاربر admin با موفقیت تغییر کرد.",
+                        "success": True,
+                        "username": "admin"
+                    }
+                }
+            ),
+            400: openapi.Response(
+                description="خطا در تغییر پسورد",
+                examples={
+                    "application/json": {
+                        "message": "داده‌های ارسالی نامعتبر است.",
+                        "errors": {
+                            "username": ["کاربر با این نام کاربری یافت نشد."],
+                            "new_password": ["پسورد جدید و تکرار آن مطابقت ندارند."]
+                        },
+                        "success": False
+                    }
+                }
+            )
+        },
+        tags=['Admin - Password Management']
+    )
+    def post(self, request):
+        serializer = AdminChangeUserPasswordSerializer(data=request.data)
+
+        if serializer.is_valid():
+            try:
+                user = serializer.save()
+
+                return Response({
+                    'message': f'پسورد کاربر {user.username} با موفقیت تغییر کرد.',
+                    'success': True,
+                    'username': user.username
+                }, status=status.HTTP_200_OK)
+
+            except Exception as e:
+                return Response({
+                    'message': f'خطا در تغییر پسورد: {str(e)}',
+                    'success': False
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({
+            'message': 'داده‌های ارسالی نامعتبر است.',
+            'errors': serializer.errors,
+            'success': False
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UsersListView(APIView):
+    """
+    دریافت لیست کاربران برای ادمین
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAdminUser]
+
+    @swagger_auto_schema(
+        operation_description="دریافت لیست تمام کاربران",
+        responses={
+            200: openapi.Response(
+                description="لیست کاربران",
+                examples={
+                    "application/json": {
+                        "users": [
+                            {
+                                "id": 1,
+                                "username": "admin",
+                                "email": "admin@example.com",
+                                "first_name": "Admin",
+                                "last_name": "User",
+                                "is_staff": True,
+                                "is_superuser": True,
+                                "date_joined": "2024-01-01T00:00:00Z"
+                            }
+                        ],
+                        "count": 1,
+                        "success": True
+                    }
+                }
+            )
+        },
+        tags=['Admin - User Management']
+    )
+    def get(self, request):
+        users = User.objects.all().values(
+            'id', 'username', 'email', 'first_name', 'last_name',
+            'is_staff', 'is_superuser', 'date_joined'
+        )
+
+        return Response({
+            'users': list(users),
+            'count': len(users),
+            'success': True
+        }, status=status.HTTP_200_OK)
