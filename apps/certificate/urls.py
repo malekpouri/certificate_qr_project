@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import StudentViewSet, CertificateViewSet, CourseViewSet
 from . import views
 
-app_name = 'certificate'
+# app_name = 'certificate'
 
 router = DefaultRouter()
 router.register(r'students', StudentViewSet)
