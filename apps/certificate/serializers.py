@@ -1,5 +1,9 @@
-from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
 from .models import Student, Certificate, Course
+from rest_framework import serializers
+from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
 
 
 class StudentSerializer(serializers.ModelSerializer):
@@ -62,3 +66,65 @@ class CertificateValidationSerializer(serializers.Serializer):
     is_valid = serializers.BooleanField(read_only=True)
     certificate = CertificateSerializer(read_only=True)
     message = serializers.CharField(read_only=True)
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+    confirm_password = serializers.CharField(required=True)
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("پسورد فعلی اشتباه است.")
+        return value
+
+    def validate_new_password(self, value):
+        try:
+            validate_password(value)
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+        return value
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['confirm_password']:
+            raise serializers.ValidationError("پسورد جدید و تکرار آن مطابقت ندارند.")
+        return attrs
+
+    def save(self, **kwargs):
+        user = self.context['request'].user
+        user.set_password(self.validated_data['new_password'])
+        user.save()
+        return user
+
+
+class AdminChangeUserPasswordSerializer(serializers.Serializer):
+    """برای ادمین که می‌خواهد پسورد کاربران دیگر را تغییر دهد"""
+    username = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+    confirm_password = serializers.CharField(required=True)
+
+    def validate_username(self, value):
+        try:
+            user = User.objects.get(username=value)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("کاربر با این نام کاربری یافت نشد.")
+        return value
+
+    def validate_new_password(self, value):
+        try:
+            validate_password(value)
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
+        return value
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['confirm_password']:
+            raise serializers.ValidationError("پسورد جدید و تکرار آن مطابقت ندارند.")
+        return attrs
+
+    def save(self, **kwargs):
+        username = self.validated_data['username']
+        user = User.objects.get(username=username)
+        user.set_password(self.validated_data['new_password'])
+        user.save()
+        return user
